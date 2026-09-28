@@ -4,6 +4,7 @@ import Footer from "../components/Footer.tsx";
 import Table from 'react-bootstrap/Table';
 import * as api from "../services/api.ts";
 import {useEffect, useState} from "react";
+import { useNavigate } from "react-router-dom";
 
 
 interface Category {
@@ -25,6 +26,34 @@ function List() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [ingredients,setIngredients] = useState<Ingredient[]>([]);
     const [ingredientsName,setIngredientsName] = useState("");
+    const [categoryId,setCategoryId] = useState<number>(0);
+    const navigate = useNavigate();
+
+    const handleSearch = async (event) => 
+        {
+            event.preventDefault();
+            try {
+              
+        let url = `ingredients?page=0&size=10&sortBy=ingredientName`;
+        
+        if (ingredientsName.trim() !== "") {
+            url += `&name=${ingredientsName.trim()}`;
+        }
+       
+        if (categoryId !== 0) {
+            url += `&categoryId=${categoryId}`;
+        }
+        const response = await api.get(url);
+        setIngredients(response.data.content);
+            } catch (error) {
+                console.error("Error loading data:", error);
+            }
+        }
+
+    const handleAdd= (event) => {
+        event.preventDefault();
+        navigate("/create");
+    }    
 
     useEffect(() => {
         const loadData = async () => {
@@ -61,10 +90,10 @@ function List() {
                                     <strong>Category:</strong>
                                 </Form.Label>
                                 <Col sm={3}>
-                                    <Form.Select>
+                                    <Form.Select value={categoryId} onChange={(e)=> setCategoryId(Number(e.target.value))}>
                                         <option value="0">Select category</option>
                                         {categories.map((Category) => ( (
-                                            <option value={Category.categoryId}>{Category.categoryName}</option>
+                                            <option key={Category.categoryId} value={Category.categoryId}>{Category.categoryName}</option>
                                         )))}
                                     </Form.Select>
                                 </Col>
@@ -79,10 +108,10 @@ function List() {
                                     
                                 </Col>
                                 <Col className="text-center">
-                                    <Button variant="primary" size="sm" className="me-3 px-4">
-                                        Filter
+                                    <Button onClick={handleSearch} variant="primary" size="sm" className="me-3 px-4">
+                                        Search
                                     </Button>
-                                    <Button variant="secondary" size="sm" className="px-4">
+                                    <Button onClick={handleAdd} variant="secondary" size="sm" className="px-4">
                                         Add new
                                     </Button>
                                 </Col>
@@ -100,27 +129,32 @@ function List() {
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {ingredients.map((ingredient,index) => (
-                                        <tr >
-                                            <td>{index+1}</td>
-                                            <td>{ingredient.ingredientName}</td>
-                                            <td>{ingredient.categoryName}</td>
-                                            <td>{ingredient.producerName}</td>
-                                            <td>{ingredient.supplier}</td>
-                                            <td>{ingredient.priceFrom +"-"+ ingredient.priceTo}</td>
-
-
-
-                                            <td>
-                                                <Button >
-                                                    Edit
-                                                </Button>
-                                                <Button >
-                                                    Delete
-                                                </Button>
+                                    {ingredients.length > 0 ? (
+                                        ingredients.map((ingredient, index) => (
+                                            <tr key={index}>
+                                                <td>{index + 1}</td>
+                                                <td>{ingredient.ingredientName}</td>
+                                                <td>{ingredient.categoryName}</td>
+                                                <td>{ingredient.producerName}</td>
+                                                <td>{ingredient.supplier}</td>
+                                                <td>{ingredient.priceFrom + " - " + ingredient.priceTo}</td>
+                                                <td>
+                                                    <Button >
+                                                        Edit
+                                                    </Button>
+                                                    <Button >
+                                                        Delete
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={7} className="text-center text-muted py-3">
+                                                Not found
                                             </td>
                                         </tr>
-                                    ))}
+                                    )}
 
 
 
